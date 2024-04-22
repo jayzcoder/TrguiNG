@@ -1,6 +1,14 @@
 
 ## 基于 [openscopeproject/TrguiNG](https://github.com/openscopeproject/TrguiNG) 汉化并增加部分功能
 
+### 更新 (240422a)
+1. add: 目录分组增加复制路径功能
+2. Issue #3 | fix: 一键URL访问跨域问题（简单转跳处理）
+3. Issue #4 #10 | 合并 openscopeproject/TrguiNG:1.3.0
+4. Issue #9 | impr: 隐藏/展示运行状态（右上角）
+5. Issue #6 #7 #12 | 翻译调整
+6. windows应用程序部分页面汉化补充
+
 ### 更新 (240417a)
 1. fix: 体积支持 PB EB 展示
 2. fix: 工具栏的一些同步问题
