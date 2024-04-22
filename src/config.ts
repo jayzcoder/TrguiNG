@@ -148,6 +148,7 @@ interface Settings {
         compactDirectories: boolean,
         showFilterGroupSize: boolean,
         selectFilterGroupOnDbClk: boolean,
+        showRunStatus: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         statusBarGlobalSpeeds: boolean,
         showFiltersPanel: boolean,
@@ -244,6 +245,7 @@ const DefaultSettings: Settings = {
         compactDirectories: false,
         showFilterGroupSize: true,
         selectFilterGroupOnDbClk: true,
+        showRunStatus: true,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,
