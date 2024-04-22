@@ -74,7 +74,7 @@ const FilterSections = ["种子状态", "数据目录", "用户标签", "服务�
 export type FilterSectionName = typeof FilterSections[number];
 
 const StatusFilters = [
-    "全部", "下载中", "已暂停", "正在做种", "正在校验", "活动中", "未活动", "工作中", "错误", "磁力链接",
+    "全部", "下载中", "已暂停", "已完成", "正在校验", "活动中", "未活动", "工作中", "错误", "磁力链接",
 ] as const;
 export type StatusFilterName = typeof StatusFilters[number];
 type StatusFiltersVisibility = Record<StatusFilterName, boolean>;
