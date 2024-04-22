@@ -44,6 +44,10 @@ export function MoveModal(props: ModalState) {
             {
                 onSuccess: () => {
                     addPath(location.path);
+                    notifications.show({
+                        message: "移动种子完成",
+                        color: "green",
+                    });
                 },
                 onError: (e) => {
                     console.log("移动种子异常", e);

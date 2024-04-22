@@ -45,7 +45,7 @@ async function onCloseRequested(app: Root, config: Config) {
 }
 
 async function onFocusChange(focused: boolean, config: Config) {
-    if (!focused && config.values.app.onMinimize === "hide") {
+    if (!focused && config.values.app.onMinimize === "隐藏") {
         if (await appWindow.isMinimized()) {
             void appWindow.emit("window-hidden");
             void appWindow.hide();
@@ -55,11 +55,11 @@ async function onFocusChange(focused: boolean, config: Config) {
 
 function setupTauriEvents(config: Config, app: Root) {
     void appWindow.onCloseRequested((event) => {
-        if (config.values.app.onClose === "hide") {
+        if (config.values.app.onClose === "隐藏") {
             event.preventDefault();
             void appWindow.emit("window-hidden");
             void appWindow.hide();
-        } else if (config.values.app.onClose === "quit") {
+        } else if (config.values.app.onClose === "退出") {
             event.preventDefault();
             config.save().finally(() => {
                 void appWindow.emit("app-exit");

@@ -94,10 +94,10 @@ export type SectionsVisibility<S extends string> = Array<{
     visible: boolean,
 }>;
 
-export const WindowMinimizeOptions = ["minimize", "hide"] as const;
-export const WindowCloseOptions = ["hide", "close", "quit"] as const;
+export const WindowMinimizeOptions = ["最小化", "隐藏"] as const;
+export const WindowCloseOptions = ["隐藏", "关闭", "退出"] as const;
 export const DeleteTorrentDataOptions = ["默认关", "默认开", "记住选择"] as const;
-export const ProgressbarStyleOptions = ["plain", "animated", "colorful"] as const;
+export const ProgressbarStyleOptions = ["静态", "动态", "多颜色"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
@@ -214,8 +214,8 @@ const DefaultSettings: Settings = {
         toastNotifications: true,
         toastNotificationSound: true,
         showTrayIcon: true,
-        onMinimize: "minimize",
-        onClose: "quit",
+        onMinimize: "最小化",
+        onClose: "退出",
         fontSizeBase: 0.9,
         fontSize: 0.9,
     },
@@ -271,7 +271,7 @@ const DefaultSettings: Settings = {
             dark: {},
             light: {},
         },
-        progressbarStyle: "animated",
+        progressbarStyle: "动态",
     },
 };
 

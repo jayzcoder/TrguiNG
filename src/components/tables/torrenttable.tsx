@@ -338,7 +338,7 @@ function PercentBarField(props: TableFieldProps) {
     const now = props.torrent[props.fieldName] * 100;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
     let variant: ProgressBarVariant = "default";
-    if (config.values.interface.progressbarStyle === "colorful") {
+    if (config.values.interface.progressbarStyle === "多颜色") {
         if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
             props.torrent.cachedError !== "") variant = "red";
         else {
@@ -352,7 +352,7 @@ function PercentBarField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={config.values.interface.progressbarStyle === "animated" && active}
+        animate={config.values.interface.progressbarStyle === "动态" && active}
         variant={variant} />;
 }
 

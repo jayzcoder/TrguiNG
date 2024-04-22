@@ -145,7 +145,7 @@ function PercentBarField(props: TableFieldProps) {
     const config = useContext(ConfigContext);
     const now = props.entry.percent ?? 0;
     let variant: ProgressBarVariant = "default";
-    if (config.values.interface.progressbarStyle === "colorful") {
+    if (config.values.interface.progressbarStyle === "多颜色") {
         if (props.entry.want === false) variant = "grey";
         else if (now === 100) variant = "dark-green";
     }
