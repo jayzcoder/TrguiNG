@@ -64,7 +64,7 @@ const statusFilters: StatusFilter[] = [
         icon: StatusIcons.Stopped,
     },
     {
-        name: "正在做种",
+        name: "已完成",
         filter: (t: Torrent) => {
             return t.status === Status.seeding ||
                 (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0);
