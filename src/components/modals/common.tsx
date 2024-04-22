@@ -116,7 +116,11 @@ export interface LocationData {
 export function useTorrentLocation(): LocationData {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
-    const [lastPaths, setLastPaths] = useState(serverConfig.lastSaveDirs);
+    const [lastPaths, setLastPaths] = useState([] as string[]);
+
+    useEffect(() => {
+        setLastPaths(serverConfig.lastSaveDirs);
+    }, [serverConfig]);
 
     const [path, setPath] = useState<string>("");
 
@@ -221,6 +225,8 @@ export function Label({
                 rightSection={
                     <CloseButton
                         onMouseDown={onRemove}
+                        title="删除"
+                        color="gray.0"
                         variant="transparent"
                         size={22}
                         iconSize={14}

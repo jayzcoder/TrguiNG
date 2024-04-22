@@ -70,6 +70,7 @@ interface ToolbarProps {
     toggleFiltersPanel: () => void,
     toggleDetailsPanel: () => void,
     toggleMainSplit: () => void,
+    toggleShowRunStatus: () => void,
 }
 
 function useButtonHandlers(
@@ -227,6 +228,7 @@ function Toolbar(props: ToolbarProps) {
         ["mod + P", props.toggleMainSplit],
         ["mod + O", props.toggleFiltersPanel],
         ["mod + I", props.toggleDetailsPanel],
+        ["mod + R", props.toggleShowRunStatus],
     ]);
 
     const serverSelected = useServerSelectedTorrents();
@@ -344,7 +346,7 @@ function Toolbar(props: ToolbarProps) {
                 data={trackersData} value={props.searchTracker}
                 onChange={(e) => { onTackerChange(e.currentTarget.value); }} />
 
-            <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
+            <Menu shadow="md" width="16rem" withinPortal middlewares={{ shift: true, flip: true }}>
                 <Menu.Target>
                     <ToolbarButton title="Layout">
                         <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />
@@ -358,11 +360,15 @@ function Toolbar(props: ToolbarProps) {
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
-                        隐藏/展示过滤
+                        隐藏/展示分组
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
                         隐藏/展示详情
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={props.toggleShowRunStatus} rightSection={<Kbd>{`${modKeyString()} R`}</Kbd>}>
+                        隐藏/展示运行状态
                     </Menu.Item>
                 </Menu.Dropdown>
             </Menu>

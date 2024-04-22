@@ -92,6 +92,12 @@ export class TransmissionClient {
         if (toastNotificationSound) {
             this.headers["X-TrguiNG-sound"] = "true";
         }
+        if (connection.url === "") {
+            const url = new URL(document.documentURI);
+            if (url.username !== "" || url.password !== "") {
+                window.location.href = window.location.protocol + "//" + window.location.host;
+            }
+        }
         if (connection.username !== "" || connection.password !== "") {
             const auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
             this.headers.Authorization = auth;

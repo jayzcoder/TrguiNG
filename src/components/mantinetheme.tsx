@@ -39,16 +39,6 @@ const Theme: (colorScheme: ColorScheme, font?: string) => MantineThemeOverride =
                 },
             },
         },
-        Tabs: {
-            styles: (theme) => ({
-                tab: {
-                    borderColor: colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    "&[data-active]": {
-                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
-                    },
-                },
-            }),
-        },
         Checkbox: {
             styles: {
                 input: {

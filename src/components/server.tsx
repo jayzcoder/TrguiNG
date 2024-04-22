@@ -194,6 +194,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
     const [showFiltersPanel, { toggle: toggleFiltersPanel }] = useDisclosure(config.values.interface.showFiltersPanel);
     const [showDetailsPanel, { toggle: toggleDetailsPanel }] = useDisclosure(config.values.interface.showDetailsPanel);
+    const [showRunStatus, { toggle: toggleShowRunStatus }] = useDisclosure(config.values.interface.showRunStatus);
     const [mainSplit, toggleMainSplit] = useToggle<SplitType>([
         config.values.interface.mainSplit,
         config.values.interface.mainSplit === "vertical" ? "horizontal" : "vertical"]);
@@ -202,7 +203,8 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         config.values.interface.showFiltersPanel = showFiltersPanel;
         config.values.interface.showDetailsPanel = showDetailsPanel;
         config.values.interface.mainSplit = mainSplit;
-    }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
+        config.values.interface.showRunStatus = showRunStatus;
+    }, [config, showFiltersPanel, showDetailsPanel, mainSplit, showRunStatus]);
 
     useEffect(() => {
         if (statusIde && selectedTorrents) {
@@ -269,14 +271,15 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     toggleFiltersPanel={toggleFiltersPanel}
                     toggleDetailsPanel={toggleDetailsPanel}
                     toggleMainSplit={toggleMainSplit}
+                    toggleShowRunStatus={toggleShowRunStatus}
                 />
             </Box>
-            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-0-${mainSplit}`}
+            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-0-${mainSplit}-${showRunStatus}`}
                 mainSplit={mainSplit}
                 left={showFiltersPanel
                     ? <Split
                         direction={"vertical"}
-                        sizes={[80, 20]}
+                        sizes={showRunStatus ? [80, 20] : [100]}
                         snapOffset={0}
                         gutterSize={6}
                         className={`split-vertical`}
@@ -290,12 +293,12 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                                 setCurrentTorrentId={setCurrentTorrentInt}
                                 selectedReducer={selectedReducer} />
                         </Box>
-                        <Flex direction="column" h="100%" w="100%">
+                        {showRunStatus && <Flex direction="column" h="100%" w="100%">
                             <span style={{width: "100%", height: "auto", fontSize:"small", paddingLeft: "0.2rem"}}>{statusTitle}</span>
                             <textarea style={{width: "100%", height: "100%", lineHeight: 1.3, overflow: "auto", top: 0, left: 0, resize:"none", fontSize:"small"}} wrap={"off"} readOnly={true}
                                       value={statusContent}/>
-                        </Flex>
-                    </Split>: undefined}
+                        </Flex>}
+                    </Split> : undefined}
                 right={
                     showFiltersPanel?
                     <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-0-${mainSplit}`}

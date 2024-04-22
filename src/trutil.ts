@@ -143,7 +143,7 @@ export function decodeMagnetLink(magnet: string) {
     });
 
     let hash = params.find((p) => p[0] === "xt")?.[1] ?? "";
-    if (hash.startsWith("urn:btih:")) hash = hash.substring(9);
+    if (hash.startsWith("urn:btih:")) hash = hash.substring(9).toLowerCase();
     else hash = "";
 
     const trackers = params

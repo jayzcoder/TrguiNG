@@ -157,6 +157,10 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                 tab: {
                     flexBasis: "12rem",
                     flexShrink: 1,
+                    borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    "&[data-active]": {
+                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
+                    },
                 },
                 tabLabel: {
                     marginInline: "auto",

@@ -24,11 +24,13 @@ import * as StatusIcons from "./statusicons";
 import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
-import {bytesToHumanReadableStr, eventHasModKey, useForceRender} from "trutil";
+import {bytesToHumanReadableStr, ensurePathDelimiter, eventHasModKey, useForceRender} from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 import {useServerSelectedTorrents, useServerTorrentData} from "../rpc/torrent";
 import {TableSelectReducer} from "./tables/common";
+import {notifications} from "@mantine/notifications";
+import {copyToClipboard} from "../taurishim";
 
 export interface TorrentFilter {
     id: string,
@@ -141,12 +143,57 @@ interface FilterRowProps extends WithCurrentFilters {
     selectAllOnDbClk: boolean,
 }
 
+function focusNextFilter(element: HTMLElement, next: boolean) {
+    let nextElement: HTMLElement | null | undefined;
+    const parent = element.parentElement as HTMLElement;
+    const order = parseInt(parent.style.order);
+    if (next) {
+        if (element.nextElementSibling?.hasAttribute("tabIndex") === true) {
+            nextElement = element.nextElementSibling as HTMLElement;
+        } else {
+            for (const node of parent.parentElement?.children ?? []) {
+                if (parseInt((node as HTMLElement).style.order) === order + 1) {
+                    nextElement = node.firstElementChild?.nextElementSibling as HTMLElement | null | undefined;
+                }
+            }
+        }
+    } else {
+        if (element.previousElementSibling?.hasAttribute("tabIndex") === true) {
+            nextElement = element.previousElementSibling as HTMLElement;
+        } else {
+            for (const node of parent.parentElement?.children ?? []) {
+                if (parseInt((node as HTMLElement).style.order) === order - 1) {
+                    nextElement = node.lastElementChild as HTMLElement | null | undefined;
+                }
+            }
+        }
+    }
+
+    if (nextElement !== undefined && nextElement != null) {
+        nextElement.focus();
+        nextElement.click?.();
+    }
+}
+
+function filterOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "ArrowDown") {
+        event.stopPropagation();
+        event.preventDefault();
+        focusNextFilter(event.currentTarget, true);
+    }
+    if (event.key === "ArrowUp") {
+        event.stopPropagation();
+        event.preventDefault();
+        focusNextFilter(event.currentTarget, false);
+    }
+}
+
 const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
     const serverData = useServerTorrentData();
     const filterTorrents = serverData.torrents.filter(props.filter.filter);
     const serverSelected = useServerSelectedTorrents();
     let filterSize = props.showSize ? bytesToHumanReadableStr(filterTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : "";
-    return <Flex align="center" gap="sm" px="xs"
+    return <Flex align="center" gap="sm" px="xs" tabIndex={-1}
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
             props.setCurrentFilters({
@@ -167,7 +214,8 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
                 }
             }
             props.setSearchTracker("");
-        }}>
+        }}
+        onKeyDown={filterOnKeyDown}>
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }} title={props.filter.name}>{props.filter.name}</div>
         <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.count})`}</div>
@@ -231,10 +279,31 @@ function DirFilterRow(props: DirFilterRowProps) {
     const serverSelected = useServerSelectedTorrents();
     const dirTorrents = serverData.torrents.filter(filter);
     let dirSize = props.showSize ? bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : ""
+    const [iconColor, setIconColor] = useState<string>("green");
+    const dirPath = ensurePathDelimiter(props.dir.path);
+    const onCopyPath = useCallback(() => {
+        copyToClipboard(dirPath);
+        notifications.show({
+            message: `已复制路径到剪切板:` + dirPath,
+            color: "green",
+        });
+    }, [dirPath])
+
+    const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+        if (expandable && !props.dir.expanded && event.key === "ArrowRight") {
+            props.dir.expanded = true;
+            props.expandedReducer({ verb: "add", value: props.dir.path });
+        } else if (expandable && props.dir.expanded && event.key === "ArrowLeft") {
+            props.dir.expanded = false;
+            props.expandedReducer({ verb: "remove", value: props.dir.path });
+        } else {
+            filterOnKeyDown(event);
+        }
+    }, [expandable, props]);
 
     return (
-        <Flex align="center" gap="sm" px="xs"
-            style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
+        <Flex align="center" gap="sm" px="xs" tabIndex={-1}
+            style={{ paddingLeft: `${props.dir.level * 1.2 + 0.2}rem`, cursor: "default" }}
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
                 props.setCurrentFilters({
@@ -255,7 +324,8 @@ function DirFilterRow(props: DirFilterRowProps) {
                     }
                 }
                 props.setSearchTracker("");
-            }}>
+            }}
+            onKeyDown={onKeyDown}>
             <div className="icon-container">
                 {expandable
                     ? props.dir.expanded
@@ -267,6 +337,17 @@ function DirFilterRow(props: DirFilterRowProps) {
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
             <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.dir.count})`}</div>
             {props.showSize && <div style={{ flexShrink: 0, marginLeft: "auto", fontSize: "small", opacity: 0.8 }}>{`[${dirSize}]`}</div>}
+            <Icon.FileEarmarkTextFill
+                style={{ flexShrink: 0, marginLeft: props.showSize?undefined:"auto" }}
+                title={"点击复制：" + dirPath}
+                size="1.1rem" cursor="pointer" opacity={0.9}
+                color={iconColor}
+                onMouseOver={()=>setIconColor("blue")}
+                onMouseOut={()=>setIconColor("green")}
+                onMouseDown={()=>setIconColor("gray")}
+                onMouseUp={()=>setIconColor("green")}
+                onClick={onCopyPath}
+            />
         </Flex>
     );
 }
@@ -408,7 +489,6 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         return [labels, trackers, errors];
     }, [config, torrents]);
 
-
     const [sections, setSections] = useReducer(
         (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {
             setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
@@ -518,13 +598,13 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Menu.Dropdown miw="10rem">
                     {statusFilters.map((f, index) =>
                         f.required !== true &&
-                            <Menu.Item
-                                key={f.name}
-                                onClick={ () => { onStatusFiltersSubmenuItemClick(index); }}
-                                icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                            >
-                                {f.name}
-                            </Menu.Item>)}
+                        <Menu.Item
+                            key={f.name}
+                            onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
+                            icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                        >
+                            {f.name}
+                        </Menu.Item>)}
                 </Menu.Dropdown>
             </Portal>
         </Menu>
@@ -543,7 +623,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 onSectionItemMouseEnter={closeStatusFiltersSubmenu}
                 closeOnClickOutside={!statusFiltersSubmenuOpened}
             >
-                <Menu.Divider/>
+                <Menu.Divider />
                 <Menu.Item
                     ref={statusFiltersItemRef}
                     icon={<Box miw="1rem" />}

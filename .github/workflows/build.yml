@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download dbip database
-        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-02.mmdb.gz" | zcat > dbip.mmdb
+        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-04.mmdb.gz" | zcat > dbip.mmdb
       - uses: actions/upload-artifact@v3
         with:
           name: dbip

@@ -82,8 +82,8 @@ function PercentField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={config.values.interface.progressbarStyle === "animated" && active}
-        variant={config.values.interface.progressbarStyle === "colorful" && active ? "green" : "default"} />;
+        animate={config.values.interface.progressbarStyle === "动态" && active}
+        variant={config.values.interface.progressbarStyle === "多颜色" && active ? "green" : "default"} />;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {

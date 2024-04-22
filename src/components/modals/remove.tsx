@@ -101,6 +101,14 @@ export function RemoveModal(props: ModalState) {
                         deleteData: false,
                     },
                     {
+                        onSuccess: () => {
+                            if (deleteDataIds.length <= 0) {
+                                notifications.show({
+                                    message: "删除种子完成",
+                                    color: "green",
+                                });
+                            }
+                        },
                         onError: (e) => {
                             console.log("删除种子出错", e);
                             notifications.show({
@@ -118,6 +126,12 @@ export function RemoveModal(props: ModalState) {
                         deleteData: true,
                     },
                     {
+                        onSuccess: () => {
+                            notifications.show({
+                                message: "删除种子完成",
+                                color: "green",
+                            });
+                        },
                         onError: (e) => {
                             console.log("删除种子(含数据)出错", e);
                             notifications.show({
@@ -135,6 +149,12 @@ export function RemoveModal(props: ModalState) {
                     deleteData,
                 },
                 {
+                    onSuccess: () => {
+                        notifications.show({
+                            message: "删除种子完成",
+                            color: "green",
+                        });
+                    },
                     onError: (e) => {
                         console.log("删除种子出错", e);
                         notifications.show({

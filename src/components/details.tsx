@@ -446,7 +446,19 @@ function Details(props: DetailsProps) {
 
     return (
         <Tabs variant="outline" defaultValue={defaultTab} keepMounted={false}
-            h="100%" w="100%" sx={{ display: "flex", flexDirection: "column" }}>
+            h="100%" w="100%"
+            styles={((theme) => ({
+                root: {
+                    display: "flex",
+                    flexDirection: "column",
+                },
+                tab: {
+                    borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    "&[data-active]": {
+                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
+                    },
+                },
+            }))}>
             <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
                 <MemoSectionsContextMenu
                     sections={tabs} setSections={setTabs}

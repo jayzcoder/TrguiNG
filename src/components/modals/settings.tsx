@@ -132,12 +132,12 @@ function ServerPanel(props: ServerPanelProps) {
     return (
         <div style={{ flexGrow: 1 }}>
             <TextInput
-                label="Name"
+                label="名称"
                 {...props.form.getInputProps(`servers.${props.current}.name`)}
             />
 
             <TextInput
-                label="Server rpc url"
+                label="下载器 rpc 接口地址"
                 {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
                 placeholder="http://1.2.3.4:9091/transmission/rpc"
             />
@@ -145,20 +145,20 @@ function ServerPanel(props: ServerPanelProps) {
             <Grid>
                 <Grid.Col span={6}>
                     <TextInput
-                        label="User name"
+                        label="用户名"
                         {...props.form.getInputProps(`servers.${props.current}.connection.username`)}
                     />
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <PasswordInput
-                        label="Password"
+                        label="密码"
                         {...props.form.getInputProps(`servers.${props.current}.connection.password`)}
                     />
                 </Grid.Col>
 
                 <Grid.Col span={12}>
                     <Textarea
-                        label={"Path mappings in \"remote=local\" format, one per line"}
+                        label={"\"remote=local\" 格式的路径映射，一行一个"}
                         onChange={(e) => {
                             // TODO fix
                             const mappings = e.target.value.split("\n")
@@ -214,53 +214,53 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
 
     return (
         <Grid align="center" gutter="md">
-            <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
+            <Grid.Col span={6}>删除成功添加的torrent文件</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel="开" offLabel="关" size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.deleteAdded", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Show notifications for completed torrents</Grid.Col>
+            <Grid.Col span={6}>显示已完成种子的通知</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel="开" offLabel="关" size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={2}>Play sound</Grid.Col>
+            <Grid.Col span={2}>播放提示音</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel="开" offLabel="关" size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.toastNotificationSound", { type: "checkbox" })} />
             </Grid.Col>
             {platform === "Windows" && <>
-                <Grid.Col span={6}>Launch on startup</Grid.Col>
+                <Grid.Col span={6}>开机时启动</Grid.Col>
                 <Grid.Col span={2}>
-                    <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    <Switch onLabel="开" offLabel="关" size="xl" styles={bigSwitchStyles}
                         checked={autostart} onChange={onChangeAutostart} />
                 </Grid.Col>
                 <Grid.Col span={4}></Grid.Col>
-                <Grid.Col span={6}>Associate application</Grid.Col>
-                <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
-                <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
+                <Grid.Col span={6}>关联应用程序</Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent 文件</Button></Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateMagnet}>磁力链接</Button></Grid.Col>
             </>}
-            <Grid.Col span={6}>Show tray icon</Grid.Col>
+            <Grid.Col span={6}>显示托盘图标</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel="开" offLabel="关" size="xl" styles={bigSwitchStyles}
                     checked={form.values.app.showTrayIcon}
                     onChange={(e) => {
                         form.setFieldValue("app.showTrayIcon", e.currentTarget.checked);
                         if (!e.currentTarget.checked) {
-                            form.setFieldValue("app.onMinimize", "minimize");
-                            form.setFieldValue("app.onClose", "quit");
+                            form.setFieldValue("app.onMinimize", "最小化");
+                            form.setFieldValue("app.onClose", "退出");
                         }
                     }} />
             </Grid.Col>
-            <Grid.Col span={4}>(takes effect after restart)</Grid.Col>
-            <Grid.Col span={6}>When minimized</Grid.Col>
+            <Grid.Col span={4}>(重新启动后生效)</Grid.Col>
+            <Grid.Col span={6}>最小化时</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
                     disabled={!form.values.app.showTrayIcon}
                     {...form.getInputProps("app.onMinimize")} />
             </Grid.Col>
-            <Grid.Col span={6}>When closed</Grid.Col>
+            <Grid.Col span={6}>关闭时</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl data={WindowCloseOptions as unknown as string[]}
                     disabled={!form.values.app.showTrayIcon}
@@ -268,9 +268,13 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
             </Grid.Col>
             <Grid.Col>
                 <Text fz="sm" fs="italic">
-                    Hiding the window keeps frontend running, this uses more RAM but reopening the window is nearly instant.
-                    Closing the window shuts down the webview, in this mode reopening the window is slower.
-                    You can always access the window through the system tray icon.
+                    隐藏窗口可以保持前端运行，这会使用更多的RAM，但重新打开窗口几乎是即时的。
+                </Text>
+                <Text fz="sm" fs="italic">
+                    关闭窗口会关闭Web视图，在这种模式下，重新打开窗口的速度较慢。
+                </Text>
+                <Text fz="sm" fs="italic">
+                    您始终可以通过系统托盘图标访问该窗口。
                 </Text>
             </Grid.Col>
         </Grid>
@@ -349,14 +353,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             onClose={props.close}
             onSave={onSave}
             centered
-            title="Application Settings"
+            title="应用设置"
         >
             <form>
                 <Tabs mih="25rem" defaultValue="servers">
                     <Tabs.List>
-                        <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
-                        <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
-                        {TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
+                        <Tabs.Tab value="servers" p="lg">下载器列表</Tabs.Tab>
+                        <Tabs.Tab value="integrations" p="lg">程序设置</Tabs.Tab>
+                        {TAURI && <Tabs.Tab value="interface" p="lg">其他设置</Tabs.Tab>}
                     </Tabs.List>
 
                     <Tabs.Panel value="servers" pt="md" mih="24rem">

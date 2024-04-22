@@ -94,14 +94,14 @@ const AllFields: readonly TableField[] = [
         requiredFields: ["name", "error", "trackerStats", "leftUntilDone"] as TorrentFieldsType[],
     },
     { name: "totalSize", label: "总大小", component: ByteSizeField },
-    { name: "sizeWhenDone", label: "已下载", component: ByteSizeField },
+    { name: "sizeWhenDone", label: "选定大小", component: ByteSizeField },
     { name: "leftUntilDone", label: "剩余", component: ByteSizeField },
     { name: "haveValid", label: "有效", component: ByteSizeField },
-    { name: "downloadedEver", label: "实际下载", component: ByteSizeField },
+    { name: "downloadedEver", label: "已下载", component: ByteSizeField },
     { name: "uploadedEver", label: "已上传", component: ByteSizeField },
     {
         name: "uploadedEver",
-        label: "上传/实际下载",
+        label: "已上传/已下载",
         component: UploadRatioField,
         accessorFn: (t) => t.uploadedEver === 0 ? 0 : t.uploadedEver / t.downloadedEver,
         columnId: "simpleRatio",
@@ -131,7 +131,7 @@ const AllFields: readonly TableField[] = [
         columnId: "peersGettingFromUs",
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
-    { name: "eta", label: "ETA", component: EtaField },
+    { name: "eta", label: "剩余时间", component: EtaField },
     { name: "uploadRatio", label: "分享率", component: PositiveNumberField },
     {
         name: "trackerStats",
@@ -338,7 +338,7 @@ function PercentBarField(props: TableFieldProps) {
     const now = props.torrent[props.fieldName] * 100;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
     let variant: ProgressBarVariant = "default";
-    if (config.values.interface.progressbarStyle === "colorful") {
+    if (config.values.interface.progressbarStyle === "多颜色") {
         if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
             props.torrent.cachedError !== "") variant = "red";
         else {
@@ -352,7 +352,7 @@ function PercentBarField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={config.values.interface.progressbarStyle === "animated" && active}
+        animate={config.values.interface.progressbarStyle === "动态" && active}
         variant={variant} />;
 }
 
