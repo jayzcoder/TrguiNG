@@ -776,7 +776,7 @@ function TorrentContextMenu(props: {
                     onClick={() => props.modals.current?.editTrackers()}
                     icon={<Icon.Wifi size="1.1rem" />}
                     onMouseEnter={closeQueueSubmenu}
-                    disabled={serverSelected.size === 0 || (serverSelected.size > 1 && rpcVersion < 17)}>
+                    disabled={serverSelected.size === 0}>
                     修改Tracker...
                 </Menu.Item>
                 <Menu.Item
