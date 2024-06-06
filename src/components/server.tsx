@@ -166,7 +166,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
         selectedReducer({ verb: "filter", ids });
         setFilteredTorrents(filtered);
-        setShowTrackerSpeed(currentFilters[0].id === "status-活动中");
+        setShowTrackerSpeed(currentFilters?.[0]?.id === "status-活动中");
     }, [torrents, currentFilters, searchFilter, currentTorrent, selectedReducer, setShowTrackerSpeed]);
 
     selectAll.current = useCallback(() => {
