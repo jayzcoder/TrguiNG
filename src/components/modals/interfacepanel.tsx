@@ -146,7 +146,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox label="历史保存路径排序"
+                <Checkbox label="目录排序"
                     {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>进度条样式</Grid.Col>
