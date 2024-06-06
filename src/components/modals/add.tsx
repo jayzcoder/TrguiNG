@@ -57,6 +57,7 @@ interface AddCommonProps extends React.PropsWithChildren {
     priority: PriorityNumberType,
     setPriority: (p: PriorityNumberType) => void,
     disabled?: boolean,
+    isMagnet?: boolean,
     delay: boolean,
     setDelay: (b: boolean) => void,
     delayTime: number,
@@ -70,7 +71,7 @@ function AddCommon(props: AddCommonProps) {
         <TorrentLocation {...props.location} inputLabel="保存目录" disabled={props.disabled} />
         {rpcVersion >= 17 &&
             <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="用户标签" disabled={props.disabled} />}
-        <Group mt="lg">
+        {props.isMagnet && <Group mt="lg">
             <Checkbox
                 my="xl"
                 pr="xl"
@@ -84,7 +85,7 @@ function AddCommon(props: AddCommonProps) {
                 value={props.delayTime}
                 onChange={(v) => { props.setDelayTime(typeof v === "number" ? v : 5); }} />
             秒
-        </Group>
+        </Group>}
         <Group>
             <Checkbox
                 label="自动开始"
@@ -109,7 +110,7 @@ function AddCommon(props: AddCommonProps) {
 
 interface AddCommonModalProps extends ModalState {
     serverName: string,
-    uri: string | File | undefined,
+    uris: Array<string | File> | undefined,
     tabsRef: React.RefObject<ServerTabsRef>,
     setStatus: (status: RunStatus) => void,
 }
@@ -184,10 +185,11 @@ export function AddMagnet(props: AddCommonModalProps) {
 
     useEffect(() => {
         if (props.opened) {
-            if (typeof props.uri === "string") setMagnet(props.uri);
+            const uri = props.uris?.[0];
+            if (typeof uri === "string") setMagnet(uri);
             else setMagnet("");
         }
-    }, [props.uri, props.opened]);
+    }, [props.uris, props.opened]);
 
     const [magnetData, setMagnetData] = useState<{ hash: string, trackers: string[] }>();
 
@@ -317,7 +319,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData, props.setStatus]);
 
     const config = useContext(ConfigContext);
-    const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
+    const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uris?.[0] !== "string";
     useEffect(() => {
         if (props.opened && !shouldOpen) {
             onAdd();
@@ -340,7 +342,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 error={existingTorrent === undefined
                     ? undefined
                     : "种子已存在"} />
-            <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
+            <AddCommon {...common.props} isMagnet={true} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled"
@@ -385,13 +387,19 @@ function useTauriReadFile(
                 return [await invoke<TorrentFileData>("read_file", { path })];
             };
 
-            let uri = props.uri;
-            if (typeof uri === "string" && uri.startsWith("file://")) {
-                uri = decodeURIComponent(uri.substring(7));
-            }
+            let uris = new Array<string>();
+            props.uris?.forEach((uri) => {
+                if (typeof uri === "string") {
+                    if (uri.startsWith("file://")) {
+                        uris.push(decodeURIComponent(uri.substring(7)));
+                    } else {
+                        uris.push(uri);
+                    }
+                }
+            });
 
-            const pathPromise = typeof uri === "string"
-                ? Promise.resolve(uri)
+            const pathPromise = uris.length > 0
+                ? Promise.resolve(uris)
                 : dialogOpen({
                     title: "选择种子文件",
                     filters: [{
@@ -427,35 +435,35 @@ function useWebappReadFile(
 ) {
     useEffect(() => {
         if (!TAURI && props.opened) {
-            if (props.uri === undefined) {
+            if (props.uris === undefined || props.uris?.length <= 0) {
                 if (filesInputRef.current != null) {
                     filesInputRef.current.value = "";
                     filesInputRef.current.click();
                 }
                 close();
             } else {
-                const file = props.uri as File;
-                readLocalTorrent(file).then((b64) => {
-                    setTorrentData([{
+                const files = props.uris as Array<File>;
+                Promise.all(files.map(readLocalTorrent)).then((filesData) => {
+                    setTorrentData(filesData.map((b64, i) => ({
                         torrentPath: "",
                         metadata: b64,
-                        name: file.name,
+                        name: files[i].name,
                         hash: "",
                         files: null,
                         trackers: [],
                         length: 0,
-                    }]);
-                }).catch(() => {
+                    })));
+                }).catch((e) => {
                     notifications.show({
                         title: "读取文件失败",
-                        message: file.name,
+                        message: e,
                         color: "red",
                     });
                     close();
                 });
             }
         }
-    }, [props.opened, props.uri, close, filesInputRef, setTorrentData]);
+    }, [props.opened, props.uris, close, filesInputRef, setTorrentData]);
 }
 
 function useFilesInput(
@@ -671,7 +679,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Divider my="sm" />
                 {torrentExists
                     ? <Text color="red" fw="bold" fz="lg">种子已存在</Text>
-                    : <LimitedNamesList names={names} limit={1} />}
+                    : <LimitedNamesList names={names} limit={5} />}
                 <div style={{ position: "relative" }}>
                     <AddCommon {...common.props} disabled={torrentExists}>
                         {(wantedSize > 0 || torrentData[0].files != null) &&

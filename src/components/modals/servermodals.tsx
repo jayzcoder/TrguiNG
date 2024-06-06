@@ -85,18 +85,25 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         editTorrent: openEditTorrentModal,
     }));
 
-    const [magnetLink, setMagnetLink] = useState<string>();
-    const [torrent, setTorrent] = useState<string | File>();
-
-    const [addQueue, setAddQueue] = useState<Array<string | File>>([]);
+    const [magnetLinks, setMagnetLinks] = useState<Array<string | File>>([]);
+    const [torrents, setTorrents] = useState<Array<string | File>>([]);
 
     const enqueue = useCallback((paths: string[] | File[]) => {
-        setAddQueue([...addQueue, ...paths]);
         void appWindow.show();
         void appWindow.unminimize();
         void appWindow.setFocus();
         void appWindow.emit("window-shown");
-    }, [addQueue]);
+        if (paths.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
+            const item = paths[0];
+            if (typeof item === "string" && item.startsWith("magnet:?")) {
+                setMagnetLinks(paths);
+                openAddMagnetModal();
+            } else {
+                setTorrents(paths);
+                openAddTorrentModal();
+            }
+        }
+    }, [showAddMagnetModal, showAddTorrentModal, setMagnetLinks, setTorrents, openAddMagnetModal, openAddTorrentModal]);
 
     useEffect(() => {
         if (TAURI) {
@@ -141,41 +148,15 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         };
     }, [enqueue]);
 
-    useEffect(() => {
-        if (addQueue.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
-            const item = addQueue[0];
-            if (typeof item === "string" && item.startsWith("magnet:?")) {
-                setMagnetLink(item);
-                openAddMagnetModal();
-            } else {
-                setTorrent(item);
-                openAddTorrentModal();
-            }
-        }
-    }, [addQueue, showAddMagnetModal, showAddTorrentModal, setMagnetLink, setTorrent, openAddMagnetModal, openAddTorrentModal]);
-
     const closeAddMagnetModalAndPop = useCallback(() => {
         closeAddMagnetModal();
-        if (magnetLink !== undefined && addQueue.length > 0 && addQueue[0] === magnetLink) {
-            setMagnetLink(undefined);
-            setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length > 0) {
-            // kick the queue again
-            setAddQueue([...addQueue]);
-        }
-    }, [closeAddMagnetModal, addQueue, magnetLink]);
+        setMagnetLinks([]);
+    }, [closeAddMagnetModal, setMagnetLinks]);
 
     const closeAddTorrentModalAndPop = useCallback(() => {
         closeAddTorrentModal();
-        if (torrent !== undefined && addQueue.length > 0 && addQueue[0] === torrent) {
-            setTorrent(undefined);
-            setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length > 0) {
-            // kick the queue again
-            setAddQueue([...addQueue]);
-        }
-    }, [closeAddTorrentModal, addQueue, torrent]);
-
+        setTorrents([]);
+    }, [closeAddTorrentModal, setTorrents]);
     return <>
         <EditLabelsModal
             opened={showLabelsModal} close={closeLabelsModal} />
@@ -185,13 +166,13 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
             opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
             serverName={props.serverName}
-            uri={magnetLink}
+            uris={magnetLinks}
             tabsRef={props.tabsRef}
             setStatus={props.setStatus}
             opened={showAddMagnetModal} close={closeAddMagnetModalAndPop} />
         <AddTorrent
             serverName={props.serverName}
-            uri={torrent}
+            uris={torrents}
             tabsRef={props.tabsRef}
             setStatus={props.setStatus}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
