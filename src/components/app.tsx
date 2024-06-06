@@ -71,7 +71,7 @@ function CreateTorrentButton() {
             variant="default"
             size="lg"
             onClick={onClick}
-            title={`Create new torrent file (${modKeyString()} + T)`}
+            title={`创建种子 (${modKeyString()} + T)`}
             my="auto"
         >
             <Icon.Stars size="1.1rem" />
@@ -124,11 +124,11 @@ export default function TauriApp() {
                     setCurrentServer={setCurrentServer} >
                     <ShowVersion btn="lg" />
                     <ColorSchemeToggle btn="lg" />
-                    <FontSizeToggle />
+                    <FontSizeToggle btn="lg"/>
                     <CreateTorrentButton />
                     <ActionIcon
                         size="lg" variant="default" my="auto"
-                        title="Configure servers"
+                        title="应用设置"
                         onClick={serverConfigHandlers.open}>
                         <Icon.GearFill size="1.1rem" />
                     </ActionIcon>

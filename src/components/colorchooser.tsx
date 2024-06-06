@@ -46,7 +46,7 @@ export default function ColorChooser(props: ColorChooserProps) {
                     props.onChange(undefined);
                     setOpened(false);
                 }}>
-                    Reset
+                    还原
                 </ActionIcon>
                 <Grid columns={10}>
                     {Object.keys(theme.colors).map((color) => shades.map((shade) => (

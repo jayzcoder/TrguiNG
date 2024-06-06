@@ -117,6 +117,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
     const [statusIde, setStatusIde] = useState<boolean>(status.ide);
     const [statusTitle, setStatusTitle] = useState<string | undefined>(status.title);
     const [statusContent, setStatusContent] = useState<string | undefined>(status.content);
+    const [showTrackerSpeed, setShowTrackerSpeed] = useState<boolean>(false);
 
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
 
@@ -165,7 +166,8 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
         selectedReducer({ verb: "filter", ids });
         setFilteredTorrents(filtered);
-    }, [torrents, currentFilters, searchFilter, currentTorrent, selectedReducer]);
+        setShowTrackerSpeed(currentFilters[0].id === "status-活动中");
+    }, [torrents, currentFilters, searchFilter, currentTorrent, selectedReducer, setShowTrackerSpeed]);
 
     selectAll.current = useCallback(() => {
         const ids = filteredTorrents.map((t) => t.id) ?? [];
@@ -231,13 +233,14 @@ export function Server({ hostname, tabsRef }: ServerProps) {
             }, [setStatusIde, setStatusTitle, setStatusContent]);
 
     const filteredTrackers = useMemo(() => {
-        const trackers: Record<string, number> = {};
+        const trackers: Record<string, {count: number, speed: number}> = {};
         const filtered = torrents?.filter((t) => {
             return currentFilters.find((f) => !f.filter(t)) === undefined;
         }) ?? [];
         filtered.forEach((t) => {
-            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
-            trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
+            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = {count: 0, speed: 0};
+            trackers[t.cachedMainTracker].count = trackers[t.cachedMainTracker].count + 1;
+            trackers[t.cachedMainTracker].speed = trackers[t.cachedMainTracker].speed + t.rateUpload;
         });
         if (!trackers[searchTracker]) setSearchTracker("");
         return trackers;
@@ -265,6 +268,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     setSearchTerms={setSearchTerms}
                     searchTracker={searchTracker}
                     setSearchTracker={setSearchTracker}
+                    showTrackerSpeed={showTrackerSpeed}
                     trackers={filteredTrackers}
                     modals={modals}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}

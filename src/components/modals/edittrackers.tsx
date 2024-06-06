@@ -132,7 +132,7 @@ export function EditTrackers(props: ModalState) {
                     <Text>Tracker列表，一行一个</Text>
                 </Grid.Col>
                 <Grid.Col span={4}>
-                    <Button onClick={addDefaultTrackers}>添加到默认Trackers</Button>
+                    <Button onClick={addDefaultTrackers}>追加默认Trackers</Button>
                 </Grid.Col>
                 <Grid.Col>
                     <Textarea minRows={10} wrap={"off"} style={ {overflow: "auto"} }

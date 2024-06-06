@@ -18,13 +18,13 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import type { ColorScheme } from "@mantine/core";
-import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
+import {Checkbox, Flex, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMantineTheme} from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
 import { DeleteTorrentDataOptions, ProgressbarStyleOptions } from "config";
 import type { ProgressbarStyleOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
-import { ColorSchemeToggle } from "components/miscbuttons";
+import {ColorSchemeToggle, FontSizeToggle, ShowVersion} from "components/miscbuttons";
 import { Label } from "./common";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -101,13 +101,16 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
 
     return (
         <Grid align="center">
-            <Grid.Col span={1}>
-                <ColorSchemeToggle />
+            <Grid.Col span={2}>
+                <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
+                    <ColorSchemeToggle />
+                    <FontSizeToggle />
+                </div>
             </Grid.Col>
             <Grid.Col span={1}>
                 字体
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={3}>
                 <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
             </Grid.Col>
             <Grid.Col span={2}>

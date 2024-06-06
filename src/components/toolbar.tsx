@@ -31,7 +31,7 @@ import type { ModalCallbacks } from "./modals/servermodals";
 import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
-import { modKeyString } from "trutil";
+import {bytesToHumanReadableStr, modKeyString} from "trutil";
 import { useServerSelectedTorrents } from "rpc/torrent";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
@@ -64,7 +64,8 @@ interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
     searchTracker: string,
     setSearchTracker: (tracker: string) => void,
-    trackers: Record<string, number>,
+    showTrackerSpeed: boolean,
+    trackers: Record<string, {count: number, speed: number}>,
     modals: React.RefObject<ModalCallbacks>,
     altSpeedMode: boolean,
     toggleFiltersPanel: () => void,
@@ -190,14 +191,21 @@ function Toolbar(props: ToolbarProps) {
     }, [debouncedSetSearchTerms]);
 
     const trackersData = useMemo(()=>{
-        let count = 0;
-        const values = Object.keys(props.trackers).sort().map((tracker) => {
-            const n = props.trackers[tracker];
-            count += n;
-            return {value: tracker, label: tracker +  " (" + n + ")"}
-        });
-        return [{value: "", label: "<All Trackers>"}, ...values]
-    }, [props.trackers])
+        if (props.showTrackerSpeed) {
+            let totalSpeed = 0;
+            const values = Object.keys(props.trackers).sort().map((tracker) => {
+                const node = props.trackers[tracker];
+                totalSpeed += node.speed;
+                return {value: tracker, label: tracker +  " (" + node.count + ") " + `[${bytesToHumanReadableStr(node.speed)}/s]`}
+            });
+            return [{value: "", label: "<All Trackers> " + `[${bytesToHumanReadableStr(totalSpeed)}/s]`}, ...values]
+        } else {
+            const values = Object.keys(props.trackers).sort().map((tracker) => {
+                return {value: tracker, label: tracker +  " (" + props.trackers[tracker].count + ")"}
+            });
+            return [{value: "", label: "<All Trackers>"}, ...values]
+        }
+    }, [props.showTrackerSpeed, props.trackers])
 
     const onTackerChange = useCallback((tracker: string) => {
         if (tracker == "") {
@@ -342,13 +350,13 @@ function Toolbar(props: ToolbarProps) {
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
-            <NativeSelect w="auto" miw="20rem"
+            <NativeSelect w="auto" miw={props.showTrackerSpeed ? "25rem" : "20rem"}
                 data={trackersData} value={props.searchTracker}
                 onChange={(e) => { onTackerChange(e.currentTarget.value); }} />
 
             <Menu shadow="md" width="16rem" withinPortal middlewares={{ shift: true, flip: true }}>
                 <Menu.Target>
-                    <ToolbarButton title="Layout">
+                    <ToolbarButton title="布局">
                         <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />
                     </ToolbarButton>
                 </Menu.Target>
@@ -374,7 +382,7 @@ function Toolbar(props: ToolbarProps) {
             </Menu>
 
             <ToolbarButton
-                title="Polling intervals and server settings (F9)"
+                title="设置 (F9)"
                 onClick={handlers.daemonSettings}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
