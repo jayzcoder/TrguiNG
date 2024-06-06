@@ -36,6 +36,7 @@ export interface InterfaceFormValues {
         deleteTorrentData: DeleteTorrentDataOption,
         progressbarStyle: ProgressbarStyleOption,
         numLastSaveDirs: number,
+        sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
         defaultTrackers: string[],
     },
@@ -143,6 +144,10 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     min={1}
                     max={100}
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
+            </Grid.Col>
+            <Grid.Col span={6}>
+                <Checkbox label="历史保存路径排序"
+                    {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>进度条样式</Grid.Col>
             <Grid.Col span={3}>

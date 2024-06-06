@@ -102,7 +102,7 @@ export default function TauriApp() {
     const tabsRef = useRef<ServerTabsRef>(null);
 
     const [currentServer, setCurrentServer] = useState<ServerConfig | undefined>(
-        config.getServer(config.getOpenTabs()[0]));
+        config.getServer(config.getLastOpenTab()));
     const [servers, setServers] = useState(config.getServers());
 
     const [showServerConfig, serverConfigHandlers] = useDisclosure(false);

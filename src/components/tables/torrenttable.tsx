@@ -132,7 +132,7 @@ const AllFields: readonly TableField[] = [
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
     { name: "eta", label: "剩余时间", component: EtaField },
-    { name: "uploadRatio", label: "分享率", component: PositiveNumberField },
+    { name: "uploadRatio", label: "分享率", component: FixedDecimalField },
     {
         name: "trackerStats",
         label: "服务器",
@@ -152,7 +152,7 @@ const AllFields: readonly TableField[] = [
     { name: "downloadDir", label: "保存目录", component: StringField },
     { name: "bandwidthPriority", label: "优先级", component: PriorityField },
     { name: "id", label: "ID", component: StringField },
-    { name: "queuePosition", label: "队列位置", component: StringField },
+    { name: "queuePosition", label: "队列位置", component: PositiveNumberField },
     { name: "secondsSeeding", label: "做种时长", component: TimeField },
     { name: "isPrivate", label: "私有", component: StringField },
     { name: "labels", label: "用户标签", component: LabelsField },
@@ -222,6 +222,15 @@ function PositiveNumberField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
             {num < 0 ? "" : num}
+        </div>
+    );
+}
+
+function FixedDecimalField(props: TableFieldProps) {
+    const num = props.torrent[props.fieldName];
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {num < 0 ? "" : Number(num).toFixed(2)}
         </div>
     );
 }

@@ -118,9 +118,17 @@ export function useTorrentLocation(): LocationData {
     const serverConfig = useContext(ServerConfigContext);
     const [lastPaths, setLastPaths] = useState([] as string[]);
 
+    const updateLastPaths = useCallback(() => {
+        const paths = [...serverConfig.lastSaveDirs];
+        if (config.values.interface.sortLastSaveDirs) {
+            paths.sort();
+        }
+        setLastPaths(paths);
+    }, [config, serverConfig]);
+
     useEffect(() => {
-        setLastPaths(serverConfig.lastSaveDirs);
-    }, [serverConfig]);
+        updateLastPaths();
+    }, [updateLastPaths]);
 
     const [path, setPath] = useState<string>("");
 
@@ -149,13 +157,13 @@ export function useTorrentLocation(): LocationData {
 
     const addPath = useCallback((dir: string) => {
         config.addSaveDir(serverConfig.name, dir);
-        setLastPaths([...serverConfig.lastSaveDirs]);
-    }, [config, serverConfig]);
+        updateLastPaths();
+    }, [config, serverConfig, updateLastPaths]);
 
     const removePath = useCallback((dir: string) => {
         config.removeSaveDir(serverConfig.name, dir);
-        setLastPaths([...serverConfig.lastSaveDirs]);
-    }, [config, serverConfig]);
+        updateLastPaths();
+    }, [config, serverConfig, updateLastPaths]);
 
     return { path, setPath, lastPaths, addPath, removePath, browseHandler };
 }
@@ -174,7 +182,7 @@ export function TorrentLocation(props: LocationData) {
                     <Menu position="left-start" withinPortal
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
                         <Menu.Target>
-                            <ActionIcon py="md" disabled={props.disabled}>
+                            <ActionIcon py="md" disabled={props.disabled === true || props.lastPaths.length === 0}>
                                 <Icon.ClockHistory size="16" />
                             </ActionIcon>
                         </Menu.Target>
@@ -201,7 +209,7 @@ export function TorrentLocation(props: LocationData) {
                                                 <Icon.Trash size="12" />
                                             </ActionIcon>}
                                     >
-                                        {path}
+                                        {path.length > 0 ? path : "<empty>"}
                                     </Menu.Item>
                                 ))}
                             </ScrollArea.Autosize>

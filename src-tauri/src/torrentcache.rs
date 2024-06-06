@@ -70,26 +70,24 @@ pub async fn process_response(
     let mut buf = Vec::new();
 
     match headers.get(hyper::header::CONTENT_ENCODING) {
-        Some(value) => {
-            match value.to_str().unwrap().to_lowercase().as_str() {
-                "deflate" => {
-                    let mut deflater = flate2::bufread::DeflateDecoder::new(response_bytes.as_ref());
-                    buf.reserve(128 * 1024);
-                    deflater.read_to_end(&mut buf).ok();
-                    data_bytes = buf.as_slice();
-                },
-                "gzip" => {
-                    let mut unzipper = flate2::bufread::GzDecoder::new(response_bytes.as_ref());
-                    buf.reserve(128 * 1024);
-                    unzipper.read_to_end(&mut buf).ok();
-                    data_bytes = buf.as_slice();
-                },
-                encoding => {
-                    println!("Unexpected response encoding: {}", encoding);
-                    data_bytes = response_bytes.as_ref();
-                },
+        Some(value) => match value.to_str().unwrap().to_lowercase().as_str() {
+            "deflate" => {
+                let mut deflater = flate2::bufread::DeflateDecoder::new(response_bytes.as_ref());
+                buf.reserve(128 * 1024);
+                deflater.read_to_end(&mut buf).ok();
+                data_bytes = buf.as_slice();
             }
-        }
+            "gzip" => {
+                let mut unzipper = flate2::bufread::GzDecoder::new(response_bytes.as_ref());
+                buf.reserve(128 * 1024);
+                unzipper.read_to_end(&mut buf).ok();
+                data_bytes = buf.as_slice();
+            }
+            encoding => {
+                println!("Unexpected response encoding: {}", encoding);
+                data_bytes = response_bytes.as_ref();
+            }
+        },
         None => {
             data_bytes = response_bytes.as_ref();
         }
@@ -146,8 +144,13 @@ async fn process_torrents(
         old_map.iter().for_each(|(id, old_torrent)| {
             if let Some(new_torrent) = map.get(id) {
                 // If status switches from downloading (4) to seeding (6) or queued to seed (5)
-                // then show a "download complete" notification
-                if new_torrent.status > 4 && old_torrent.status == 4 {
+                // then show a "download complete" notification.
+                // Also check that torrent name is still the same just in case there was a restart
+                // since the last pull and the torrent ids are reassigned.
+                if new_torrent.name == old_torrent.name
+                    && new_torrent.status > 4
+                    && old_torrent.status == 4
+                {
                     play_sound = sound;
                     if toast {
                         show_notification(app, new_torrent.name.as_str());

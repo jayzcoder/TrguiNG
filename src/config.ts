@@ -124,12 +124,14 @@ export interface StyleOverrides {
 
 interface Settings {
     servers: ServerConfig[],
-    openTabs: string[],
+    openTabs?: string[], // moved into app
     app: {
         window: {
             size: [number, number],
             position: [number, number] | undefined,
         },
+        openTabs: string[],
+        lastTab: number,
         deleteAdded: boolean,
         toastNotifications: boolean,
         toastNotificationSound: boolean,
@@ -162,6 +164,7 @@ interface Settings {
         deleteTorrentDataSelection: boolean,
         deleteTorrentDataWhenOneSelection: boolean,
         numLastSaveDirs: number,
+        sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
@@ -204,12 +207,13 @@ const DefaultTrackerList = [
 
 const DefaultSettings: Settings = {
     servers: [],
-    openTabs: [],
     app: {
         window: {
             size: [1024, 800],
             position: undefined,
         },
+        openTabs: [],
+        lastTab: 0,
         deleteAdded: false,
         toastNotifications: true,
         toastNotificationSound: true,
@@ -265,6 +269,7 @@ const DefaultSettings: Settings = {
         deleteTorrentDataSelection: false,
         deleteTorrentDataWhenOneSelection: false,
         numLastSaveDirs: 20,
+        sortLastSaveDirs: false,
         preconfiguredLabels: [],
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {
@@ -292,17 +297,25 @@ export class Config {
                 overrides[this.values.interface.theme ?? "light"].backgroundColor = overrides.backgroundColor;
                 overrides.backgroundColor = undefined;
             }
+            if (this.values.openTabs !== undefined) {
+                this.values.app.openTabs = this.values.openTabs;
+                this.values.openTabs = undefined;
+            }
         } catch (e) {
             console.log(e);
         }
 
         // sanitize data
-        this.values.openTabs = this.values.openTabs.filter(
+        this.values.app.openTabs = this.values.app.openTabs.filter(
             (name) => this.values.servers.find((s) => s.name === name) !== undefined,
         );
 
         this.values.servers = this.values.servers.map(
             (s) => ({ ...s, connection: { ...s.connection, password: deobfuscate(s.connection.password) } }));
+
+        if (this.values.app.lastTab >= this.values.app.openTabs.length) {
+            this.values.app.lastTab = -1;
+        }
 
         for (const section of FilterSections) {
             if (!this.values.interface.filterSections.find(s => s.section == section)) {
@@ -366,23 +379,28 @@ export class Config {
     }
 
     getOpenServers(): ServerConfig[] {
-        return this.values.servers.filter((s) => this.values.openTabs.includes(s.name));
+        return this.values.servers.filter((s) => this.values.app.openTabs.includes(s.name));
     }
 
     setServers(servers: ServerConfig[]) {
         this.values.servers = servers;
     }
 
-    getServer(name: string): ServerConfig | undefined {
+    getServer(name: string | undefined): ServerConfig | undefined {
         return this.values.servers.find((s) => s.name === name);
     }
 
     getOpenTabs() {
-        return this.values.openTabs;
+        return this.values.app.openTabs;
     }
 
-    setOpenTabs(tabs: string[]) {
-        this.values.openTabs = tabs;
+    getLastOpenTab(): string | undefined {
+        return this.values.app.openTabs[this.values.app.lastTab];
+    }
+
+    setOpenTabs(tabs: string[], current: number) {
+        this.values.app.openTabs = tabs;
+        this.values.app.lastTab = current;
     }
 
     setTableColumnSizes(table: TableName, sizes: ColumnSizingState) {

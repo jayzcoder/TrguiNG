@@ -43,11 +43,11 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     const [tabs, setTabs] = useState({
         openTabs: config.getOpenTabs(),
-        currentTab: config.getOpenTabs().length > 0 ? 0 : -1,
+        currentTab: config.values.app.lastTab,
     });
 
     useEffect(() => {
-        config.setOpenTabs(tabs.openTabs);
+        config.setOpenTabs(tabs.openTabs, tabs.currentTab);
         if (tabs.currentTab < 0) {
             void appWindow.setTitle("Transmission GUI");
         }
@@ -129,19 +129,23 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
     const onServersChange = useRef<(s: ServerConfig[]) => void>();
     onServersChange.current = useCallback((servers: ServerConfig[]) => {
         const newOpenTabs: string[] = [];
+        let newCurrentTab = 0;
         tabs.openTabs.forEach((serverName) => {
             props.clientManager.close(serverName);
             if (servers.find((s) => s.name === serverName) !== undefined) {
                 props.clientManager.open(serverName, config.values.app.toastNotifications, config.values.app.toastNotificationSound);
                 newOpenTabs.push(serverName);
+                if (serverName === tabs.openTabs[tabs.currentTab]) {
+                    newCurrentTab = newOpenTabs.length - 1;
+                }
             }
         });
         setTabs({
             openTabs: newOpenTabs,
-            currentTab: 0,
+            currentTab: newCurrentTab,
         });
-        setCurrentServer(config.getServer(newOpenTabs[0]));
-    }, [tabs.openTabs, setCurrentServer, config, props.clientManager]);
+        setCurrentServer(config.getServer(newOpenTabs[newCurrentTab]));
+    }, [tabs, setCurrentServer, config, props.clientManager]);
 
     useEffect(() => {
         onServersChange.current?.(props.servers);

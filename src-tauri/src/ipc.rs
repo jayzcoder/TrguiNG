@@ -14,8 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::error::Error;
+use std::io;
 use std::net::{IpAddr, TcpListener};
 use std::sync::Arc;
+use std::time::Duration;
 
 use hyper::body::{to_bytes, Bytes};
 use hyper::header::{
@@ -24,6 +27,7 @@ use hyper::header::{
 };
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
+use hyper_timeout::TimeoutConnector;
 use hyper_tls::HttpsConnector;
 use tauri::{async_runtime, AppHandle, Manager};
 use tokio::sync::{oneshot, OwnedSemaphorePermit, Semaphore};
@@ -47,6 +51,15 @@ fn not_found() -> Response<Body> {
         .status(StatusCode::NOT_FOUND)
         .body("NOT FOUND".into())
         .unwrap()
+}
+
+fn timed_out(request_headers: &HeaderMap) -> Response<Body> {
+    let mut response = Response::builder()
+        .status(StatusCode::REQUEST_TIMEOUT)
+        .body("Request timed out".into())
+        .unwrap();
+    cors(request_headers, &mut response, ALLOW_ORIGINS);
+    response
 }
 
 fn invalid_request(request_headers: &HeaderMap, msg: &str) -> Response<Body> {
@@ -87,7 +100,11 @@ async fn http_response(
     args_lock: Arc<Semaphore>,
     req: Request<Body>,
 ) -> hyper::Result<Response<Body>> {
-    let content_type = req.headers().get("Content-Type").and_then(|ct| ct.to_str().ok()).unwrap_or("");
+    let content_type = req
+        .headers()
+        .get("Content-Type")
+        .and_then(|ct| ct.to_str().ok())
+        .unwrap_or("");
     if content_type != "application/json" && req.method() != Method::OPTIONS {
         return Ok(invalid_request(req.headers(), "unexpected content-type"));
     }
@@ -165,7 +182,11 @@ async fn geoip_lookup(
 
             let mut response = Response::builder()
                 .status(StatusCode::OK)
-                .body(lookup_response.unwrap_or("Error serializing response".to_string()).into())
+                .body(
+                    lookup_response
+                        .unwrap_or("Error serializing response".to_string())
+                        .into(),
+                )
                 .unwrap();
             cors(&headers, &mut response, ALLOW_ORIGINS);
             Ok(response)
@@ -205,7 +226,11 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
             match req_builder.body(req.into_body()) {
                 Ok(req) => {
-                    let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
+                    let mut connector = TimeoutConnector::new(HttpsConnector::new());
+                    connector.set_connect_timeout(Some(Duration::from_secs(10)));
+                    connector.set_read_timeout(Some(Duration::from_secs(40)));
+                    connector.set_write_timeout(Some(Duration::from_secs(20)));
+                    let client = Client::builder().build::<_, hyper::Body>(connector);
 
                     match client.request(req).await {
                         Ok(mut response) => {
@@ -216,7 +241,18 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
                             );
                             Ok(response)
                         }
-                        Err(e) => Err(e),
+                        Err(e) => {
+                            if e.is_timeout()
+                                || e.source().is_some_and(|s| {
+                                    s.downcast_ref::<io::Error>()
+                                        .is_some_and(|s| s.kind() == io::ErrorKind::TimedOut)
+                                })
+                            {
+                                Ok(timed_out(&headers))
+                            } else {
+                                Err(e)
+                            }
+                        }
                     }
                 }
                 Err(e) => Ok(invalid_request(&headers, e.to_string().as_str())),

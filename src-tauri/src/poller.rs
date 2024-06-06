@@ -16,6 +16,7 @@
 
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use hyper::{http::HeaderValue, Client, Method, Request};
+use hyper_timeout::TimeoutConnector;
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -177,8 +178,11 @@ async fn poll(
             HeaderValue::from_bytes(value.as_bytes()).unwrap(),
         );
     }
-
-    let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
+    let mut connector = TimeoutConnector::new(HttpsConnector::new());
+    connector.set_connect_timeout(Some(Duration::from_secs(10)));
+    connector.set_read_timeout(Some(Duration::from_secs(40)));
+    connector.set_write_timeout(Some(Duration::from_secs(20)));
+    let client = Client::builder().build::<_, hyper::Body>(connector);
 
     match client
         .request(req.body(TORRENT_GET_BODY.into()).unwrap())
@@ -212,7 +216,7 @@ async fn poll(
             }
         }
         Err(e) => {
-            println!("Unexpected error during polling: {:?}", e);
+            println!("Error during polling: {:?}", e);
             Err(None)
         }
     }
