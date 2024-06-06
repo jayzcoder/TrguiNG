@@ -253,6 +253,7 @@ interface DirFilterRowProps extends FiltersProps {
     dir: Directory,
     expandedReducer: ({ verb, value }: { verb: "add" | "remove", value: string }) => void,
     showSize: boolean,
+    hideSubDirTorrents: boolean,
     selectAllOnDbClk: boolean,
 }
 
@@ -261,6 +262,12 @@ function DirFilterRow(props: DirFilterRowProps) {
         const path = t.downloadDir as string;
         if (path.length + 1 === props.dir.path.length) return props.dir.path.startsWith(path);
         return path.startsWith(props.dir.path);
+    }, [props.dir.path]);
+
+    const filterHideSub = useCallback((t: Torrent) => {
+        const path = t.downloadDir as string;
+        if (path.length + 1 === props.dir.path.length || path.length === props.dir.path.length) return props.dir.path.startsWith(path);
+        return false;
     }, [props.dir.path]);
 
     const onExpand = useCallback((e: React.MouseEvent) => {
@@ -309,7 +316,7 @@ function DirFilterRow(props: DirFilterRowProps) {
             onClick={(event) => {
                 props.setCurrentFilters({
                     verb: eventHasModKey(event) ? "toggle" : "set",
-                    filter: { id: props.id, filter },
+                    filter: { id: props.id, filter: props.hideSubDirTorrents ? filterHideSub : filter },
                 });
                 props.setSearchTracker("");
             }}
@@ -498,6 +505,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
     const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
+    const [hideSubDirTorrents, setHideSubDirTorrents] = useState(config.values.interface.hideSubDirTorrents);
     const [showFilterGroupSize, setShowFilterGroupSize] = useState(config.values.interface.showFilterGroupSize);
     const [selectFilterGroupOnDbClk, setSelectFilterGroupOnDbClk] = useState(config.values.interface.selectFilterGroupOnDbClk);
 
@@ -505,10 +513,11 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         config.values.interface.compactDirectories = compactDirectories;
+        config.values.interface.hideSubDirTorrents = hideSubDirTorrents;
         config.values.interface.showFilterGroupSize = showFilterGroupSize;
         config.values.interface.selectFilterGroupOnDbClk = selectFilterGroupOnDbClk;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, compactDirectories, showFilterGroupSize, selectFilterGroupOnDbClk]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories, hideSubDirTorrents, showFilterGroupSize, selectFilterGroupOnDbClk]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -546,17 +555,22 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const onCompactDirectoriesClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setCompactDirectories(!compactDirectories);
-    }, [compactDirectories]);
+    }, [setCompactDirectories, compactDirectories]);
+
+    const onHideSubDirTorrentsClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setHideSubDirTorrents(!hideSubDirTorrents);
+    }, [setHideSubDirTorrents, hideSubDirTorrents]);
 
     const onShowFilterGroupSizeClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setShowFilterGroupSize(!showFilterGroupSize);
-    }, [showFilterGroupSize]);
+    }, [setShowFilterGroupSize, showFilterGroupSize]);
 
     const onSelectFilterGroupOnDbClkClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setSelectFilterGroupOnDbClk(!selectFilterGroupOnDbClk);
-    }, [selectFilterGroupOnDbClk]);
+    }, [setSelectFilterGroupOnDbClk, selectFilterGroupOnDbClk]);
 
     return (<>
         <Menu
@@ -643,6 +657,13 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     目录简洁展示
                 </Menu.Item>
                 <Menu.Item
+                    icon={hideSubDirTorrents ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={onHideSubDirTorrentsClick}
+                >
+                    列表不显示子目录种子
+                </Menu.Item>
+                <Menu.Item
                     icon={showFilterGroupSize ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseEnter={closeStatusFiltersSubmenu}
                     onMouseDown={onShowFilterGroupSizeClick}
@@ -703,7 +724,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Divider mx="sm" mt="md" label="数据目录" labelPosition="center" />
                 {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        showSize={showFilterGroupSize} hideSubDirTorrents={hideSubDirTorrents} selectAllOnDbClk={selectFilterGroupOnDbClk}
                         dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters, setSearchTracker, setCurrentTorrentId, selectedReducer }} />)}
             </div>}
             {sections[sectionsMap["用户标签"]]?.visible && <div style={{ order: sectionsMap["用户标签"] }}>
