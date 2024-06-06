@@ -1,6 +1,17 @@
 
 ## 基于 [openscopeproject/TrguiNG](https://github.com/openscopeproject/TrguiNG) 汉化并增加部分功能
 
+### 更新 (240607a)
+1. merge: openscopeproject/TrguiNG
+2. add: 暂停增加子状态（已完成/未完成）
+3. add: 支持tr3批量修改tracker
+4. add: 列表不显示子目录种子（可配置，默认显示）
+5. add: web增加字体大小调整
+6. impr: 拖拽时批量处理
+7. impr: 分享率固定2位小数
+8. impr: web增加一些字体
+9. fix: 取消当前状态显示时异常
+
 ### 更新 (240422a)
 1. add: 目录分组增加复制路径功能
 2. Issue #3 | fix: 一键URL访问跨域问题（简单转跳处理）
