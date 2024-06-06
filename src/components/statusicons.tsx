@@ -58,6 +58,16 @@ export function Stopped() {
     return <PausedIcon width="1rem" height="1rem" fill={theme.colors.yellow[6]} />;
 }
 
+export function StoppedDone() {
+    const theme = useMantineTheme();
+    return <Icon.CircleFill size="1rem" fill={theme.colors.green[6]} />;
+}
+
+export function StoppedUndone() {
+    const theme = useMantineTheme();
+    return <Icon.CircleHalf width="1rem" height="1rem" fill={theme.colors.red[6]} />;
+}
+
 export function Error() {
     const theme = useMantineTheme();
     return <Icon.XSquareFill size="1rem" fill={theme.colors.red[6]} />;

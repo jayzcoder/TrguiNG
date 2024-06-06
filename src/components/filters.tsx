@@ -40,7 +40,7 @@ export interface TorrentFilter {
 interface NamedFilter {
     name: string,
     filter: (t: Torrent) => boolean,
-    icon: React.ComponentType,
+    icon: React.ComponentType | undefined,
 }
 
 interface StatusFilter extends NamedFilter {
@@ -137,6 +137,7 @@ interface FiltersProps extends WithCurrentFilters {
 
 interface FilterRowProps extends WithCurrentFilters {
     id: string,
+    level?: number,
     filter: NamedFilter,
     count: number,
     showSize: boolean,
@@ -193,7 +194,7 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
     const filterTorrents = serverData.torrents.filter(props.filter.filter);
     const serverSelected = useServerSelectedTorrents();
     let filterSize = props.showSize ? bytesToHumanReadableStr(filterTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : "";
-    return <Flex align="center" gap="sm" px="xs" tabIndex={-1}
+    return <Flex align="center" gap="sm" px="xs" tabIndex={-1} style={{paddingLeft: `${(props.level || 0) * 1.0}rem`}}
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
             props.setCurrentFilters({
@@ -216,7 +217,7 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
             props.setSearchTracker("");
         }}
         onKeyDown={filterOnKeyDown}>
-        <div className="icon-container"><props.filter.icon /></div>
+        {props.filter.icon && <div className="icon-container"><props.filter.icon /></div>}
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }} title={props.filter.name}>{props.filter.name}</div>
         <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.count})`}</div>
         {props.showSize && <div style={{ flexShrink: 0, marginLeft: "auto", fontSize: "small", opacity: 0.8 }}>{`[${filterSize}]`}</div>}
@@ -658,12 +659,45 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
             </MemoSectionsContextMenu>
             {sections[sectionsMap["种子状态"]]?.visible && <div style={{ order: sectionsMap["种子状态"] }}>
                 <Divider mx="sm" label="种子状态" labelPosition="center" />
-                {statusFilters.map((f) =>
-                    (f.required === true || statusFiltersVisibility[f.name]) && <FilterRow key={`status-${f.name}`}
-                        id={`status-${f.name}`} filter={f}
-                        count={torrents.filter(f.filter).length}
-                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} setCurrentTorrentId={setCurrentTorrentId} selectedReducer={selectedReducer} />)}
+                {statusFilters.map((f) => {
+                    if (f.required === true || statusFiltersVisibility[f.name]) {
+                        if (f.name === "已暂停") {
+                            let doneFilter : NamedFilter = {
+                                name: " 已完成",
+                                filter: (t: Torrent) => t.status === Status.stopped && (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0),
+                                icon: StatusIcons.StoppedDone,
+                            };
+                            let unDoneFilter : NamedFilter = {
+                                name: " 未完成",
+                                filter: (t: Torrent) => t.status === Status.stopped && !(t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0),
+                                icon: StatusIcons.StoppedUndone,
+                            };
+                            return <div>
+                                <FilterRow
+                                    key={`status-${f.name}`} id={`status-${f.name}`} filter={f}
+                                    count={torrents.filter(f.filter).length} showSize={showFilterGroupSize}
+                                    selectAllOnDbClk={selectFilterGroupOnDbClk} currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                                    setSearchTracker={setSearchTracker} setCurrentTorrentId={setCurrentTorrentId} selectedReducer={selectedReducer}/>
+                                <FilterRow
+                                    key={`status-${doneFilter.name}`} id={`status-${doneFilter.name}`} filter={doneFilter} level={1}
+                                    count={torrents.filter(doneFilter.filter).length} showSize={showFilterGroupSize}
+                                    selectAllOnDbClk={selectFilterGroupOnDbClk} currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                                    setSearchTracker={setSearchTracker} setCurrentTorrentId={setCurrentTorrentId} selectedReducer={selectedReducer}/>
+                                <FilterRow
+                                    key={`status-${unDoneFilter.name}`} id={`status-${unDoneFilter.name}`} filter={unDoneFilter} level={1}
+                                    count={torrents.filter(unDoneFilter.filter).length} showSize={showFilterGroupSize}
+                                    selectAllOnDbClk={selectFilterGroupOnDbClk} currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                                    setSearchTracker={setSearchTracker} setCurrentTorrentId={setCurrentTorrentId} selectedReducer={selectedReducer}/>
+                            </div>
+                        } else {
+                            return <FilterRow
+                                key={`status-${f.name}`} id={`status-${f.name}`} filter={f}
+                                count={torrents.filter(f.filter).length} showSize={showFilterGroupSize}
+                                selectAllOnDbClk={selectFilterGroupOnDbClk} currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                                setSearchTracker={setSearchTracker} setCurrentTorrentId={setCurrentTorrentId} selectedReducer={selectedReducer}/>
+                        }
+                    }
+                })}
             </div>}
             {sections[sectionsMap["数据目录"]]?.visible && <div style={{ order: sectionsMap["数据目录"] }}>
                 <Divider mx="sm" mt="md" label="数据目录" labelPosition="center" />
