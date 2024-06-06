@@ -54,7 +54,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 setSystemFonts(["Default"].concat(fonts));
             }).catch(console.error);
         } else {
-            setSystemFonts(["Default", "Arial", "Verdana", "Tahoma", "Roboto"]);
+            setSystemFonts(["Default", "Arial", "Verdana", "Tahoma", "Roboto", "Helvetica", "Lucida Family","Trebuchet MS", "Georgia", "Times", "仿宋", "华文中宋", "华文仿宋", "华文宋体", "华文楷体", "华文黑体", "华文细黑", "宋体", "微软雅黑", "微软雅黑 Light", "新宋体", "方正粗黑宋简体", "楷体", "黑体", "等线", "等线 Light"]);
         }
     }, []);
 
