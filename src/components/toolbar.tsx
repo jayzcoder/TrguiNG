@@ -23,7 +23,7 @@ import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useSt
 import * as Icon from "react-bootstrap-icons";
 import PriorityIcon from "svg/icons/priority.svg";
 import type { PriorityNumberType } from "rpc/transmission";
-import { BandwidthPriority } from "rpc/transmission";
+import {BandwidthPriority, Status} from "rpc/transmission";
 import { useTorrentAction, useMutateSession, useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { TorrentActionMethodsType } from "rpc/client";
@@ -32,7 +32,7 @@ import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
 import {bytesToHumanReadableStr, modKeyString} from "trutil";
-import { useServerSelectedTorrents } from "rpc/torrent";
+import {useServerSelectedTorrents, useServerTorrentData} from "rpc/torrent";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -79,6 +79,7 @@ function useButtonHandlers(
     altSpeedMode: boolean | undefined,
     setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
+    const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
     const actionMutate = useTorrentAction();
     const { mutate: mutateTorrent } = useMutateTorrent();
@@ -89,15 +90,39 @@ function useButtonHandlers(
                 if (serverSelected.size > 0) action?.();
             };
         };
-        const action = (method: TorrentActionMethodsType) => () => {
+        type ActionType = 'selected' | 'all' | 'done' | 'error' | 'download';
+        const action = (method: TorrentActionMethodsType, t: ActionType = 'selected') => () => {
+            let ids = new Array<number>;
+            if (t === 'selected') {
+                ids = Array.from(serverSelected)
+            } else if (t === 'all') {
+                if (method === 'torrent-start' || method === 'torrent-start-now') {
+                    ids = serverData.torrents.filter((t) => t.status === Status.stopped).map((t) => t.id as number);
+                } else if (method === 'torrent-stop') {
+                    ids = serverData.torrents.filter((t) => t.status !== Status.stopped).map((t) => t.id as number);
+                }
+            } else if (t === 'done') {
+                ids = serverData.torrents.filter((t) => t.status === Status.stopped &&
+                    (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0)).map((t) => t.id as number);
+            } else if (t === 'error') {
+                ids = serverData.torrents.filter((t) => t.error !== 0 || t.cachedError !== "").map((t) => t.id as number);
+            } else if (t === 'download') {
+                ids = serverData.torrents.filter((t) => t.status === Status.downloading).map((t) => t.id as number);
+            }
             actionMutate(
                 {
                     method,
-                    torrentIds: Array.from(serverSelected),
+                    torrentIds: ids,
                 },
                 {
+                    onSuccess: () => {
+                        notifications.show({
+                            message: "执行成功",
+                            color: "green",
+                        });
+                    },
                     onError: (e) => {
-                        console.log("更新执行出错", method, e);
+                        console.log("执行出错", method, e);
                         notifications.show({
                             message: "执行出错",
                             color: "red",
@@ -132,7 +157,12 @@ function useButtonHandlers(
 
         return {
             start: checkSelected(action("torrent-start")),
+            startAll: action("torrent-start", "all"),
+            startDone: action("torrent-start", "done"),
             pause: checkSelected(action("torrent-stop")),
+            pauseAll: action("torrent-stop", "all"),
+            pauseError: action("torrent-stop", "error"),
+            pauseDownload: action("torrent-stop", "download"),
             remove: checkSelected(props.modals.current?.remove),
             queueDown: checkSelected(action("queue-move-down")),
             queueUp: checkSelected(action("queue-move-up")),
@@ -143,7 +173,7 @@ function useButtonHandlers(
             setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
             daemonSettings: () => { props.modals.current?.daemonSettings(); },
         };
-    }, [actionMutate, mutateTorrent, props.modals, serverSelected]);
+    }, [actionMutate, mutateTorrent, props.modals, serverData, serverSelected]);
 
     const sessionMutation = useMutateSession();
 
@@ -261,13 +291,13 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="开始 (F3)"
+                    title="开始选中 (F3)"
                     disabled={!selected}
                     onClick={handlers.start} >
                     <Icon.PlayCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.blue[6]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="暂停 (F4)"
+                    title="暂停选中 (F4)"
                     disabled={!selected}
                     onClick={handlers.pause} >
                     <Icon.PauseCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.blue[6]} />
@@ -328,6 +358,44 @@ function Toolbar(props: ToolbarProps) {
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.yellow[6]} />}
                             onClick={handlers.setPriorityLow} rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}>
                             低
+                        </Menu.Item>
+                    </Menu.Dropdown>
+                </Menu>
+            </Button.Group>
+
+            <Button.Group mx="sm">
+                <Menu shadow="lg" width="15rem" withinPortal middlewares={{ shift: true, flip: false }}>
+                    <Menu.Target>
+                        <ToolbarButton title="开始" disabled={false}>
+                            <Icon.PlayCircleFill size="1.5rem" color={theme.colors.dark[6]} />
+                        </ToolbarButton>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                        <Menu.Item p={"lg"} icon={<Icon.PlayFill size={"1.0rem"} color={theme.colors.yellow[7]} />} onClick={handlers.startAll}>
+                            开始所有种子
+                        </Menu.Item>
+                        <Menu.Item p={"lg"} icon={<Icon.PlayFill size={"1.0rem"} color={theme.colors.blue[7]} />} onClick={handlers.startDone}>
+                            开始已完成的种子
+                        </Menu.Item>
+                    </Menu.Dropdown>
+                </Menu>
+                <Menu shadow="lg" width="15rem" withinPortal middlewares={{ shift: true, flip: false }}>
+                    <Menu.Target>
+                        <ToolbarButton title="暂停" disabled={false}>
+                            <Icon.PauseCircleFill size="1.5rem" color={theme.colors.dark[6]} />
+                        </ToolbarButton>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                        <Menu.Item p={"lg"} icon={<Icon.PauseFill size={"1.0rem"} color={theme.colors.blue[7]} />} onClick={handlers.pauseAll}>
+                            暂停所有种子
+                        </Menu.Item>
+                        <Menu.Item p={"lg"} icon={<Icon.PauseFill size={"1.0rem"} color={theme.colors.red[7]} />} onClick={handlers.pauseError}>
+                            暂停错误的种子
+                        </Menu.Item>
+                        <Menu.Item p={"lg"} icon={<Icon.PauseFill size={"1.0rem"} color={theme.colors.yellow[7]} />} onClick={handlers.pauseDownload}>
+                            暂停下载中的种子
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
