@@ -251,7 +251,7 @@ function SeedsField(props: TableFieldProps) {
     const sending = props.torrent.peersSendingToUs as number;
     const totalSeeds = props.torrent.cachedSeedsTotal;
     return (
-        <div style={{ width: "100%", textAlign: "right" }}>
+        <div style={{ width: "100%", textAlign: "left" }}>
             {totalSeeds < 0 ? `${sending}` : `${totalSeeds} (${sending})`}
         </div>
     );
@@ -261,7 +261,7 @@ function PeersField(props: TableFieldProps) {
     const getting = props.torrent.peersGettingFromUs as number;
     const totalPeers = props.torrent.cachedPeersTotal;
     return (
-        <div style={{ width: "100%", textAlign: "right" }}>
+        <div style={{ width: "100%", textAlign: "left" }}>
             {totalPeers < 0 ? `${getting}` : `${totalPeers} (${getting})`}
         </div>
     );
